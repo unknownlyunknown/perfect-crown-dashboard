@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perfect Crown — Sentiment Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8D48B;
+    --gold-dark: #A07C1C;
+    --bg: #0A0A0A;
+    --bg-card: #111111;
+    --bg-card-hover: #1A1A1A;
+    --border: rgba(201,168,76,0.15);
+    --border-hover: rgba(201,168,76,0.35);
+    --text: #F5F5F5;
+    --text-muted: #888888;
+    --positive: #C9A84C;
+    --negative: #8B3A3A;
+    --neutral: #555555;
+    --radius: 12px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px 20px; }
+
+  /* HEADER */
+  header {
+    text-align: center;
+    padding: 48px 20px 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+  header .crown-icon { font-size: 48px; margin-bottom: 8px; display: block; }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 700;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  header p {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-top: 8px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  header .date-range {
+    color: var(--gold);
+    font-size: 13px;
+    margin-top: 12px;
+    font-weight: 500;
+  }
+
+  /* KPI CARDS */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  .kpi-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .kpi-card:hover { border-color: var(--border-hover); transform: translateY(-2px); box-shadow: var(--shadow); }
+  .kpi-card:hover::before { opacity: 1; }
+  .kpi-card .kpi-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+  .kpi-card .kpi-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 8px;
+  }
+
+  /* SECTION */
+  .section {
+    margin-bottom: 40px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.6s ease forwards;
+  }
+  .section:nth-child(2) { animation-delay: 0.1s; }
+  .section:nth-child(3) { animation-delay: 0.2s; }
+  .section:nth-child(4) { animation-delay: 0.3s; }
+  .section:nth-child(5) { animation-delay: 0.4s; }
+
+  @keyframes fadeInUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    padding-left: 16px;
+    border-left: 3px solid var(--gold);
+    color: var(--text);
+  }
+
+  /* INSIGHT BOX */
+  .insight-box {
+    background: linear-gradient(135deg, rgba(201,168,76,0.08), rgba(201,168,76,0.02));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    position: relative;
+  }
+  .insight-box::before {
+    content: '\2726';
+    position: absolute;
+    top: -12px; left: 20px;
+    background: var(--bg);
+    padding: 0 8px;
+    color: var(--gold);
+    font-size: 20px;
+  }
+  .insight-box h3 {
+    font-family: 'Playfair Display', serif;
+    color: var(--gold);
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+  .insight-box p {
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.8;
+  }
+  .insight-box strong { color: var(--gold-light); }
+
+  /* SENTIMENT PILLS */
+  .pills-container {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .pill {
+    flex: 1;
+    min-width: 200px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: all 0.3s ease;
+  }
+  .pill:hover { border-color: var(--border-hover); }
+  .pill-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .pill-label {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+  }
+  .pill-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 700;
+  }
+  .pill-bar {
+    height: 6px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .pill-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1.2s ease;
+    width: 0;
+  }
+  .pill.positive .pill-label { color: var(--positive); }
+  .pill.positive .pill-value { color: var(--positive); }
+  .pill.positive .pill-bar-fill { background: var(--positive); }
+  .pill.negative .pill-label { color: var(--negative); }
+  .pill.negative .pill-value { color: var(--negative); }
+  .pill.negative .pill-bar-fill { background: var(--negative); }
+  .pill.neutral .pill-label { color: var(--neutral); }
+  .pill.neutral .pill-value { color: var(--neutral); }
+  .pill.neutral .pill-bar-fill { background: var(--neutral); }
+
+  /* CHARTS GRID */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 20px;
+  }
+  .chart-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    transition: all 0.3s ease;
+  }
+  .chart-card:hover { border-color: var(--border-hover); }
+  .chart-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    margin-bottom: 20px;
+    color: var(--gold);
+  }
+
+  /* DONUT */
+  .donut-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .donut-svg { width: 180px; height: 180px; }
+  .donut-legend { display: flex; flex-direction: column; gap: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* STACKED BAR */
+  .stacked-bar { display: flex; flex-direction: column; gap: 16px; }
+  .stacked-row { display: flex; align-items: center; gap: 12px; }
+  .stacked-label { width: 140px; font-size: 12px; color: var(--text-muted); text-align: right; flex-shrink: 0; }
+  .stacked-track { flex: 1; height: 28px; background: rgba(255,255,255,0.03); border-radius: 6px; overflow: hidden; display: flex; }
+  .stacked-seg {
+    height: 100%;
+    transition: width 1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+    min-width: 0;
+  }
+  .stacked-seg.pos { background: var(--positive); }
+  .stacked-seg.neg { background: var(--negative); }
+  .stacked-seg.neu { background: var(--neutral); }
+
+  /* HORIZONTAL BAR */
+  .hbar { display: flex; flex-direction: column; gap: 12px; }
+  .hbar-row { display: flex; align-items: center; gap: 12px; }
+  .hbar-label { width: 140px; font-size: 12px; color: var(--text-muted); text-align: right; flex-shrink: 0; }
+  .hbar-track { flex: 1; height: 24px; background: rgba(255,255,255,0.03); border-radius: 4px; overflow: hidden; }
+  .hbar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+    border-radius: 4px;
+    transition: width 1s ease;
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #000;
+  }
+
+  /* TOPICS LIST */
+  .topics-list { display: flex; flex-direction: column; gap: 16px; }
+  .topic-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+  }
+  .topic-item:hover { border-color: var(--border); background: rgba(201,168,76,0.04); }
+  .topic-rank {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--gold);
+    width: 36px;
+    text-align: center;
+  }
+  .topic-info { flex: 1; }
+  .topic-name { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+  .topic-progress { height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
+  .topic-progress-fill { height: 100%; background: var(--gold); border-radius: 2px; transition: width 1s ease; width: 0; }
+  .topic-count { font-size: 13px; color: var(--gold); font-weight: 600; }
+
+  /* PUBLISHERS / AUTHORS */
+  .entity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .entity-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .entity-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: var(--gold);
+  }
+  .entity-list { display: flex; flex-direction: column; gap: 10px; }
+  .entity-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .entity-row:last-child { border-bottom: none; }
+  .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #000;
+    flex-shrink: 0;
+  }
+  .entity-name { font-size: 13px; flex: 1; }
+  .entity-count { font-size: 12px; color: var(--gold); font-weight: 600; }
+
+  /* NER TAG CLOUD */
+  .ner-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  .ner-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .ner-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: var(--gold);
+  }
+  .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    background: rgba(201,168,76,0.06);
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+  }
+  .tag:hover { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.12); }
+  .tag .tag-count { color: var(--gold); font-weight: 700; margin-left: 4px; }
+
+  /* TABLE */
+  .table-wrapper {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .table-controls {
+    display: flex;
+    gap: 12px;
+    padding: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .search-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.3s ease;
+  }
+  .search-input:focus { border-color: var(--gold); }
+  .search-input::placeholder { color: var(--text-muted); }
+  .filter-btn {
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .filter-btn:hover, .filter-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.08); }
+  .table-scroll { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th {
+    padding: 14px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gold);
+    background: rgba(201,168,76,0.06);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    color: var(--text-muted);
+    vertical-align: top;
+  }
+  tr:hover td { background: rgba(201,168,76,0.03); }
+  .sentiment-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+  .sentiment-badge.positive { background: rgba(201,168,76,0.15); color: var(--positive); }
+  .sentiment-badge.negative { background: rgba(139,58,58,0.2); color: #C46B6B; }
+  .sentiment-badge.neutral { background: rgba(85,85,85,0.2); color: #999; }
+  .table-footer {
+    padding: 14px 20px;
+    font-size: 12px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    text-align: right;
+  }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 32px 20px;
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+  footer span { color: var(--gold); }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+    .stacked-label, .hbar-label { width: 100px; font-size: 11px; }
+    .donut-wrapper { flex-direction: column; }
+    header { padding: 32px 16px 24px; }
+  }
+  @media (max-width: 480px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="crown-icon">&#9813;</span>
+  <h1>PERFECT CROWN</h1>
+  <p>Sentiment Analysis Dashboard</p>
+  <div class="date-range" id="dateRange"></div>
+</header>
+
+<div class="container">
+
+  <!-- KPI CARDS -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-value" id="kpiTotal">0</div>
+      <div class="kpi-label">Total Berita</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" id="kpiPositive">0</div>
+      <div class="kpi-label">Positive</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" id="kpiNegative">0</div>
+      <div class="kpi-label">Negative</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" id="kpiNeutral">0</div>
+      <div class="kpi-label">Neutral</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" id="kpiEntities">0</div>
+      <div class="kpi-label">Total Entitas</div>
+    </div>
+  </div>
+
+  <!-- KEY INSIGHT -->
+  <div class="section">
+    <div class="insight-box">
+      <h3>Key Insights</h3>
+      <p id="insightText"></p>
+    </div>
+  </div>
+
+  <!-- SENTIMENT PILLS -->
+  <div class="section" style="margin-top:40px;">
+    <h2 class="section-title">Sentiment Distribution</h2>
+    <div class="pills-container">
+      <div class="pill positive">
+        <div class="pill-header">
+          <span class="pill-label">Positive</span>
+          <span class="pill-value" id="pillPosPct">0%</span>
+        </div>
+        <div class="pill-bar"><div class="pill-bar-fill" id="pillPosBar"></div></div>
+      </div>
+      <div class="pill negative">
+        <div class="pill-header">
+          <span class="pill-label">Negative</span>
+          <span class="pill-value" id="pillNegPct">0%</span>
+        </div>
+        <div class="pill-bar"><div class="pill-bar-fill" id="pillNegBar"></div></div>
+      </div>
+      <div class="pill neutral">
+        <div class="pill-header">
+          <span class="pill-label">Neutral</span>
+          <span class="pill-value" id="pillNeuPct">0%</span>
+        </div>
+        <div class="pill-bar"><div class="pill-bar-fill" id="pillNeuBar"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="section" style="margin-top:40px;">
+    <h2 class="section-title">Visual Analytics</h2>
+    <div class="charts-grid">
+
+      <!-- DONUT -->
+      <div class="chart-card">
+        <h3>Sentiment Overview</h3>
+        <div class="donut-wrapper">
+          <svg class="donut-svg" viewBox="0 0 42 42" id="donutChart"></svg>
+          <div class="donut-legend" id="donutLegend"></div>
+        </div>
+      </div>
+
+      <!-- STACKED BAR -->
+      <div class="chart-card">
+        <h3>Sentiment per Topik</h3>
+        <div class="stacked-bar" id="stackedBar"></div>
+      </div>
+
+      <!-- HORIZONTAL BAR -->
+      <div class="chart-card">
+        <h3>Artikel per Topik</h3>
+        <div class="hbar" id="hbarChart"></div>
+      </div>
+
+      <!-- TOP TOPICS -->
+      <div class="chart-card">
+        <h3>Top Topics Ranking</h3>
+        <div class="topics-list" id="topicsList"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PUBLISHERS & AUTHORS -->
+  <div class="section" style="margin-top:40px;">
+    <h2 class="section-title">Publishers & Authors</h2>
+    <div class="entity-grid">
+      <div class="entity-card">
+        <h3>Top Publishers</h3>
+        <div class="entity-list" id="publisherList"></div>
+      </div>
+      <div class="entity-card">
+        <h3>Top Authors</h3>
+        <div class="entity-list" id="authorList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NER -->
+  <div class="section" style="margin-top:40px;">
+    <h2 class="section-title">Named Entity Recognition</h2>
+    <div class="ner-grid">
+      <div class="ner-card">
+        <h3>Tokoh</h3>
+        <div class="tag-cloud" id="tokohCloud"></div>
+      </div>
+      <div class="ner-card">
+        <h3>Lembaga</h3>
+        <div class="tag-cloud" id="lembagaCloud"></div>
+      </div>
+      <div class="ner-card">
+        <h3>Tempat</h3>
+        <div class="tag-cloud" id="tempatCloud"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="section" style="margin-top:40px;">
+    <h2 class="section-title">Article Database</h2>
+    <div class="table-wrapper">
+      <div class="table-controls">
+        <input type="text" class="search-input" id="searchInput" placeholder="Search judul, author, publisher...">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="positive">Positive</button>
+        <button class="filter-btn" data-filter="negative">Negative</button>
+        <button class="filter-btn" data-filter="neutral">Neutral</button>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Judul Artikel</th>
+              <th>Publisher</th>
+              <th>Author</th>
+              <th>Published</th>
+              <th>Topik</th>
+              <th>Sentimen</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div class="table-footer" id="tableFooter"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <span>&#9813;</span> Perfect Crown Sentiment Dashboard &mdash; Generated <span id="genDate"></span>
+</footer>
+
+<script>
+const DATA = {"total_berita": 40, "positive": 38, "negative": 0, "neutral": 2, "total_entitas": 8, "pos_pct": 95.0, "neg_pct": 0.0, "neu_pct": 5.0, "topik_sentimen": {"Alur & Plot Twist": {"positive": 8, "negative": 0, "neutral": 2}, "Chemistry & Akting": {"positive": 11, "negative": 0, "neutral": 0}, "Produksi": {"positive": 11, "negative": 0, "neutral": 0}, "Respon Audiens": {"positive": 8, "negative": 0, "neutral": 0}}, "topik_counts": {"Chemistry & Akting": 11, "Produksi": 11, "Alur & Plot Twist": 10, "Respon Audiens": 8}, "tokoh_counts": {"IU": 12, "Byeon Wooseok": 10}, "lembaga_counts": {"Disney+": 6, "Twitter/X": 1}, "tempat_counts": {"Korea": 4, "istana": 1, "Eropa": 1, "Amerika": 1}, "publisher_counts": {"Kompas": 3, "Soompi": 3, "Tribun": 3, "Hypebeast": 2, "Detik": 2, "Vogue": 2, "Liputan6": 2, "CNN": 2}, "author_counts": {"Sarah Lee": 3, "Budi Santoso": 2, "Siti Aminah": 2, "James Wong": 2, "Maya Sari": 2, "Chloe Kim": 2, "David Lee": 2, "Andi Wijaya": 2}, "date_range": "15 Feb 2026 - 28 Oct 2026", "articles": [{"No": 1, "Judul Artikel": "Chemistry IU dan Byeon Wooseok yang Menggetarkan Hati", "Link Berita": "bit.ly/pc-chem-01", "Author": "Budi Santoso", "Publisher": "Kompas", "Content": "IU dan Byeon Wooseok menampilkan chemistry luar biasa dalam Perfect Crown. Interaksi mereka di layar menciptakan suasana romantis yang sangat natural. Penonton memuji kedalaman emosi yang mereka bangun di setiap episodenya.", "Published Date": "15 Feb 2026", "Sentimen": "positive", "Topik": "Chemistry & Akting", "Tokoh": "IU, Byeon Wooseok", "Lembaga": "-", "Tempat": "-"}, {"No": 2, "Judul Artikel": "Plot Twist Perfect Crown yang Tak Terduga", "Link Berita": "bit.ly/pc-plot-02", "Author": "Sarah Lee", "Publisher": "Soompi", "Content": "Episode 5 Perfect Crown menghadirkan plot twist yang mengejutkan penggemar. Banyak teori konspirasi muncul di media sosial terkait identitas asli sang raja. Misteri dalam alur cerita ini membuat penonton tidak bisa berhenti menebak-nebak.", "Published Date": "20 Feb 2026", "Sentimen": "positive", "Topik": "Alur & Plot Twist", "Tokoh": "-", "Lembaga": "-", "Tempat": "-"}, {"No": 3, "Judul Artikel": "Sinematografi Megah, Budget Produksi Perfect Crown Fantastis", "Link Berita": "bit.ly/pc-prod-03", "Author": "Mark Davis", "Publisher": "Variety", "Content": "Disney+ dikabarkan menghabiskan budget besar untuk produksi Perfect Crown. Sinematografi yang ditampilkan sangat memanjakan mata dengan kualitas visual kelas film layar lebar. Setiap detail latar tempat dirancang dengan sangat artistik dan mendalam.", "Published Date": "05 Mar 2026", "Sentimen": "positive", "Topik": "Produksi", "Tokoh": "-", "Lembaga": "Disney+", "Tempat": "-"}, {"No": 4, "Judul Artikel": "Perfect Crown Pecahkan Rekor Streaming Disney+", "Link Berita": "bit.ly/pc-resp-04", "Author": "Siti Aminah", "Publisher": "Detik", "Content": "Perfect Crown resmi menjadi drama dengan viewership tertinggi di Disney+ tahun ini. Tren di media sosial menunjukkan tagar drama ini selalu trending setiap kali episode baru rilis. Kesuksesan ini membuktikan daya tarik global dari kolaborasi IU dan Byeon Wooseok.", "Published Date": "12 Mar 2026", "Sentimen": "positive", "Topik": "Respon Audiens", "Tokoh": "IU, Byeon Wooseok", "Lembaga": "Disney+", "Tempat": "-"}, {"No": 5, "Judul Artikel": "Akting Emosional Byeon Wooseok Tuai Pujian Kritikus", "Link Berita": "bit.ly/pc-chem-05", "Author": "James Wong", "Publisher": "Hypebeast", "Content": "Transformasi akting Byeon Wooseok dalam Perfect Crown disebut sebagai performa terbaiknya. Ia berhasil membawakan karakter yang kompleks dengan sangat meyakinkan. Banyak kritikus memuji kemampuannya mengolah ekspresi di adegan-adegan berat.", "Published Date": "20 Mar 2026", "Sentimen": "positive", "Topik": "Chemistry & Akting", "Tokoh": "Byeon Wooseok", "Lembaga": "-", "Tempat": "-"}, {"No": 6, "Judul Artikel": "Teori Konspirasi: Siapa Pengkhianat Sebenarnya di Perfect Crown?", "Link Berita": "bit.ly/pc-plot-06", "Author": "Ani Wijaya", "Publisher": "Tribun", "Content": "Forum diskusi fans sedang ramai membahas sosok pengkhianat di istana dalam Perfect Crown. Beberapa petunjuk tersembunyi di episode terbaru memicu spekulasi liar di internet. Misteri ini menjadi bumbu utama yang membuat alur cerita sangat adiktif.", "Published Date": "25 Mar 2026", "Sentimen": "positive", "Topik": "Alur & Plot Twist", "Tokoh": "-", "Lembaga": "-", "Tempat": "istana"}, {"No": 7, "Judul Artikel": "Mengupas Arahan Sutradara di Balik Perfect Crown", "Link Berita": "bit.ly/pc-prod-07", "Author": "Elena Gomez", "Publisher": "IndieWire", "Content": "Sutradara Perfect Crown berhasil menyatukan elemen sejarah dan fantasi dengan sangat rapi. Teknik pengambilan gambar yang ia gunakan memberikan kesan megah namun tetap intim pada karakter. Arahan yang kuat menjadi kunci suksesnya drama ini di pasaran.", "Published Date": "02 Apr 2026", "Sentimen": "positive", "Topik": "Produksi", "Tokoh": "-", "Lembaga": "-", "Tempat": "-"}, {"No": 8, "Judul Artikel": "Perfect Crown vs Drakor Lain: Mengapa Ia Lebih Unggul?", "Link Berita": "bit.ly/pc-resp-08", "Author": "Kevin Park", "Publisher": "Korea Herald", "Content": "Perbandingan Perfect Crown dengan drakor lain menunjukkan keunggulan pada aspek kualitas produksi. Karakter yang diperankan IU memiliki kedalaman narasi yang jarang ditemukan di drama sejenis. Tak heran jika penonton menganggapnya sebagai standar baru drama kolosal modern.", "Published Date": "10 Apr 2026", "Sentimen": "positive", "Topik": "Produksi", "Tokoh": "IU", "Lembaga": "-", "Tempat": "-"}, {"No": 9, "Judul Artikel": "IU Menampilkan Sisi Kelam dalam Perfect Crown", "Link Berita": "bit.ly/pc-chem-09", "Author": "Maya Sari", "Publisher": "Liputan6", "Content": "Akting IU dalam Perfect Crown menunjukkan perkembangan yang sangat signifikan. Ia mampu memerankan sisi gelap karakter dengan sangat halus namun menusuk perasaan. Chemistry dengan Byeon Wooseok pun menjadi magnet utama yang tidak bisa dilewatkan.", "Published Date": "15 Apr 2026", "Sentimen": "positive", "Topik": "Chemistry & Akting", "Tokoh": "IU, Byeon Wooseok", "Lembaga": "-", "Tempat": "-"}, {"No": 10, "Judul Artikel": "Efek Visual Perfect Crown yang Mengesankan", "Link Berita": "bit.ly/pc-prod-10", "Author": "Tom Hanks", "Publisher": "ScreenRant", "Content": "Penggunaan CGI dalam Perfect Crown sangat terintegrasi dengan baik dan tidak terlihat palsu. Tim produksi telah berhasil menciptakan dunia fantasi yang sangat realistis bagi para penonton. Kualitas visual ini menjadi salah satu alasan besarnya budget yang dikeluarkan.", "Published Date": "20 Apr 2026", "Sentimen": "positive", "Topik": "Produksi", "Tokoh": "-", "Lembaga": "-", "Tempat": "-"}, {"No": 11, "Judul Artikel": "Analisis Plot: Mengapa Akhir Episode 8 Sangat Kontroversial?", "Link Berita": "bit.ly/pc-plot-11", "Author": "Lisa Ward", "Publisher": "Vox", "Content": "Akhir dari episode 8 Perfect Crown memicu perdebatan sengit di kalangan fans. Alur cerita yang semakin misterius membuat penonton bertanya-tanya akan nasib para tokoh utama. Penulis naskah dianggap sangat jenius dalam membangun ketegangan setiap pekannya.", "Published Date": "28 Apr 2026", "Sentimen": "positive", "Topik": "Alur & Plot Twist", "Tokoh": "-", "Lembaga": "-", "Tempat": "-"}, {"No": 12, "Judul Artikel": "Antusiasme Fans Terhadap Karakter Byeon Wooseok di Perfect Crown", "Link Berita": "bit.ly/pc-resp-12", "Author": "Rian Fauzi", "Publisher": "IDN Times", "Content": "Popularitas Byeon Wooseok melonjak drastis berkat perannya di Perfect Crown. Karakter yang ia mainkan dianggap sangat ikonik dan berkesan bagi para penggemar drakor. Media sosial dipenuhi dengan apresiasi terhadap totalitas aktingnya.", "Published Date": "05 May 2026", "Sentimen": "positive", "Topik": "Chemistry & Akting", "Tokoh": "Byeon Wooseok", "Lembaga": "-", "Tempat": "-"}, {"No": 13, "Judul Artikel": "Kostum Megah Perfect Crown Jadi Tren Baru", "Link Berita": "bit.ly/pc-prod-13", "Author": "Chloe Kim", "Publisher": "Vogue", "Content": "Desain kostum dalam Perfect Crown mendapat banyak pujian dari pengamat fashion. Setiap pakaian yang dikenakan IU melambangkan status dan perkembangan emosional karakternya. Detail estetika ini menunjukkan besarnya dana yang dialokasikan untuk kualitas produksi.", "Published Date": "12 May 2026", "Sentimen": "positive", "Topik": "Produksi", "Tokoh": "IU", "Lembaga": "-", "Tempat": "-"}, {"No": 14, "Judul Artikel": "IU dan Byeon Wooseok Ungkap Keseruan di Balik Layar", "Link Berita": "bit.ly/pc-chem-14", "Author": "Dian Puspita", "Publisher": "Okezone", "Content": "Dalam wawancara terbaru, IU dan Byeon Wooseok membagikan pengalaman syuting Perfect Crown yang berkesan. Keduanya mengaku sangat menikmati proses pendalaman karakter bersama. Chemistry mereka di luar kamera ternyata sama kuatnya dengan di dalam skrip.", "Published Date": "18 May 2026", "Sentimen": "positive", "Topik": "Chemistry & Akting", "Tokoh": "IU, Byeon Wooseok", "Lembaga": "-", "Tempat": "-"}, {"No": 15, "Judul Artikel": "Spekulasi Akhir Cerita Perfect Crown: Apakah Sad Ending?", "Link Berita": "bit.ly/pc-plot-15", "Author": "John Smith", "Publisher": "Deadline", "Content": "Prediksi mengenai akhir cerita Perfect Crown mulai ramai dibicarakan oleh pengamat drama. Banyak yang menduga akan ada pengorbanan besar dari karakter yang dibintangi IU. Misteri plot ini sukses menjaga rating tetap stabil hingga mendekati babak akhir.", "Published Date": "25 May 2026", "Sentimen": "neutral", "Topik": "Alur & Plot Twist", "Tokoh": "IU", "Lembaga": "-", "Tempat": "-"}, {"No": 16, "Judul Artikel": "Perfect Crown Menjadi Fenomena Budaya Populer", "Link Berita": "bit.ly/pc-resp-16", "Author": "Maria Ozawa", "Publisher": "BBC", "Content": "Dampak budaya dari Perfect Crown meluas hingga ke pasar internasional. Drama ini memicu minat orang asing terhadap sejarah dan budaya modern Korea. Disney+ sukses besar dengan strategi distribusi konten Asia mereka melalui seri ini.", "Published Date": "01 Jun 2026", "Sentimen": "positive", "Topik": "Respon Audiens", "Tokoh": "-", "Lembaga": "Disney+", "Tempat": "Korea"}, {"No": 17, "Judul Artikel": "Kritik Atas Tempo Cerita Perfect Crown yang Lambat", "Link Berita": "bit.ly/pc-plot-17", "Author": "Andre Setiawan", "Publisher": "Kompas", "Content": "Meskipun populer, beberapa penonton mengkritik tempo cerita Perfect Crown yang terasa lambat di tengah. Namun, bagi sebagian penonton lain, ini adalah cara untuk memperdalam pengembangan karakter. Plot yang kompleks memang memerlukan kesabaran dari audiens.", "Published Date": "08 Jun 2026", "Sentimen": "neutral", "Topik": "Alur & Plot Twist", "Tokoh": "-", "Lembaga": "-", "Tempat": "-"}, {"No": 18, "Judul Artikel": "Byeon Wooseok dan IU: Pasangan Ikonik Tahun 2026", "Link Berita": "bit.ly/pc-chem-18", "Author": "Farah Diba", "Publisher": "Tempo", "Content": "Chemistry antara IU dan Byeon Wooseok dinobatkan sebagai yang terbaik tahun ini. Banyak fans berharap keduanya bisa kembali beradu akting dalam proyek masa depan. Akting mereka berhasil membuat penonton baper di setiap adegan romantis.", "Published Date": "15 Jun 2026", "Sentimen": "positive", "Topik": "Chemistry & Akting", "Tokoh": "Byeon Wooseok, IU", "Lembaga": "-", "Tempat": "-"}, {"No": 19, "Judul Artikel": "Dibalik Layar: Produksi Skala Besar Perfect Crown", "Link Berita": "bit.ly/pc-prod-19", "Author": "Peter Pan", "Publisher": "Hollywood Reporter", "Content": "Menyoroti tantangan teknis dalam syuting Perfect Crown yang melibatkan banyak lokasi syuting ikonik. Budget fantastis benar-benar terlihat dari bagaimana setiap adegan disusun dengan rapi. Ini adalah proyek paling ambisius dari Disney+ di kawasan Asia.", "Published Date": "20 Jun 2026", "Sentimen": "positive", "Topik": "Produksi", "Tokoh": "-", "Lembaga": "Disney+", "Tempat": "-"}, {"No": 20, "Judul Artikel": "Perfect Crown Kuasai Chart Drama Paling Dibicarakan", "Link Berita": "bit.ly/pc-resp-20", "Author": "Budi Hartono", "Publisher": "CNBC Indonesia", "Content": "Perfect Crown menduduki peringkat pertama dalam daftar drama paling banyak dibicarakan di media sosial selama 10 minggu berturut-turut. Angka streaming terus meningkat tajam setiap bulannya. Keberhasilan ini menjadi bukti kualitas naskah dan akting yang mumpuni.", "Published Date": "28 Jun 2026", "Sentimen": "positive", "Topik": "Respon Audiens", "Tokoh": "-", "Lembaga": "-", "Tempat": "-"}, {"No": 21, "Judul Artikel": "Pendalaman Karakter IU: Sisi Emosional yang Memikat", "Link Berita": "bit.ly/pc-chem-21", "Author": "Shinta Dewi", "Publisher": "KapanLagi", "Content": "IU membuktikan kepiawaian aktingnya lewat Perfect Crown dengan memainkan emosi yang sangat beragam. Penonton dibuat menangis dan tertawa bersama karakternya. Inilah mengapa ia tetap menjadi salah satu aktris drakor papan atas saat ini.", "Published Date": "05 Jul 2026", "Sentimen": "positive", "Topik": "Chemistry & Akting", "Tokoh": "IU", "Lembaga": "-", "Tempat": "-"}, {"No": 22, "Judul Artikel": "Plot Twist Episode Terakhir Mengguncang Penggemar", "Link Berita": "bit.ly/pc-plot-22", "Author": "Sarah Lee", "Publisher": "Soompi", "Content": "Episode terakhir Perfect Crown memberikan kejutan besar yang tidak terduga bagi penonton. Semua teka-teki yang dibangun sejak awal akhirnya terjawab dengan cara yang dramatis. Komentar positif membanjiri platform media sosial setelah penayangannya.", "Published Date": "10 Jul 2026", "Sentimen": "positive", "Topik": "Alur & Plot Twist", "Tokoh": "-", "Lembaga": "-", "Tempat": "-"}, {"No": 23, "Judul Artikel": "Kualitas Produksi: Mengapa Perfect Crown Terasa Sangat Mewah?", "Link Berita": "bit.ly/pc-prod-23", "Author": "David Lee", "Publisher": "CNN", "Content": "Kemewahan produksi Perfect Crown terletak pada perhatian terhadap detail kecil seperti properti dan latar belakang. Arahan sutradara yang visioner membuat drama ini memiliki gaya unik tersendiri. Kualitas ini membedakannya dari drama standar lainnya di pasar.", "Published Date": "15 Jul 2026", "Sentimen": "positive", "Topik": "Produksi", "Tokoh": "-", "Lembaga": "-", "Tempat": "-"}, {"No": 24, "Judul Artikel": "Analisis Respon Audiens Terhadap Karakter Antagonis", "Link Berita": "bit.ly/pc-resp-24", "Author": "Andi Wijaya", "Publisher": "Tribun", "Content": "Karakter antagonis di Perfect Crown mendapatkan perhatian khusus dari audiens. Banyak fans yang mengakui betapa hebatnya akting pemeran pendukung dalam membangun konflik cerita. Respon ini memperkuat posisi Perfect Crown sebagai drama yang solid secara keseluruhan.", "Published Date": "20 Jul 2026", "Sentimen": "positive", "Topik": "Respon Audiens", "Tokoh": "-", "Lembaga": "-", "Tempat": "-"}, {"No": 25, "Judul Artikel": "Byeon Wooseok dan IU, Chemistry yang Tak Tergantikan", "Link Berita": "bit.ly/pc-chem-25", "Author": "Tika Putri", "Publisher": "Her World", "Content": "Publik sepakat bahwa chemistry IU dan Byeon Wooseok adalah nyawa dari Perfect Crown. Mereka berhasil menjaga ritme akting yang saling melengkapi sepanjang seri. Sulit membayangkan aktor lain yang bisa memerankan karakter ini sebaik mereka.", "Published Date": "25 Jul 2026", "Sentimen": "positive", "Topik": "Chemistry & Akting", "Tokoh": "Byeon Wooseok, IU", "Lembaga": "-", "Tempat": "-"}, {"No": 26, "Judul Artikel": "Misteri Tersembunyi: Simbolisme dalam Plot Perfect Crown", "Link Berita": "bit.ly/pc-plot-26", "Author": "John Doe", "Publisher": "Medium", "Content": "Penulis artikel ini membedah berbagai simbolisme yang muncul di setiap episode Perfect Crown. Misteri ini memberikan kedalaman makna bagi cerita yang tampaknya sederhana di awal. Plot yang kaya ini menjadikannya materi riset yang menarik bagi penggemar berat.", "Published Date": "01 Aug 2026", "Sentimen": "positive", "Topik": "Alur & Plot Twist", "Tokoh": "-", "Lembaga": "-", "Tempat": "-"}, {"No": 27, "Judul Artikel": "Investasi Besar Disney+ dalam Perfect Crown Terbayar Lunas", "Link Berita": "bit.ly/pc-prod-27", "Author": "Michael Scott", "Publisher": "Forbes", "Content": "Keberhasilan finansial Perfect Crown menjadi bukti suksesnya investasi Disney+ di konten lokal Korea. Budget yang besar tidak hanya untuk gaji pemain, tapi juga kualitas teknis produksi. Hasilnya adalah drama yang diakui secara global.", "Published Date": "08 Aug 2026", "Sentimen": "positive", "Topik": "Produksi", "Tokoh": "-", "Lembaga": "Disney+", "Tempat": "Korea"}, {"No": 28, "Judul Artikel": "Fenomena Perfect Crown di Media Sosial Twitter/X", "Link Berita": "bit.ly/pc-resp-28", "Author": "Rara Ayu", "Publisher": "Pikiran Rakyat", "Content": "Tagar Perfect Crown terus merajai trending topik selama masa penayangan. Penggemar membuat meme, fan-art, dan teori yang semakin mempopulerkan drama ini. Respon audiens yang sangat aktif ini membantu meningkatkan angka viewership.", "Published Date": "15 Aug 2026", "Sentimen": "positive", "Topik": "Respon Audiens", "Tokoh": "-", "Lembaga": "Twitter/X", "Tempat": "-"}, {"No": 29, "Judul Artikel": "Penampilan Memukau IU dalam Adegan Aksi Perfect Crown", "Link Berita": "bit.ly/pc-chem-29", "Author": "Dedi Kurniawan", "Publisher": "Jawa Pos", "Content": "IU tampil berani dengan mengambil adegan aksi sendiri dalam Perfect Crown. Penonton terkesan dengan ketangkasan dan dedikasi yang ia tunjukkan. Ini adalah sisi baru dari IU yang sangat diapresiasi oleh para fansnya.", "Published Date": "20 Aug 2026", "Sentimen": "positive", "Topik": "Chemistry & Akting", "Tokoh": "IU", "Lembaga": "-", "Tempat": "-"}, {"No": 30, "Judul Artikel": "Teori Fans yang Menjadi Kenyataan di Perfect Crown", "Link Berita": "bit.ly/pc-plot-30", "Author": "Susan White", "Publisher": "Buzzfeed", "Content": "Banyak teori fans di forum daring yang terbukti benar di pertengahan cerita Perfect Crown. Hal ini menunjukkan betapa interaktifnya penonton dengan alur cerita yang disajikan. Penulis naskah tampaknya memang sengaja memberikan petunjuk halus di setiap episode.", "Published Date": "25 Aug 2026", "Sentimen": "positive", "Topik": "Alur & Plot Twist", "Tokoh": "-", "Lembaga": "-", "Tempat": "-"}, {"No": 31, "Judul Artikel": "Arahan Sutradara yang Membawa Perfect Crown ke level Internasional", "Link Berita": "bit.ly/pc-prod-31", "Author": "Kevin Liu", "Publisher": "Guardian", "Content": "Sutradara Perfect Crown memiliki visi yang kuat dalam menyajikan drama sejarah ke audiens global. Teknik penyutradaraan yang modern membuat cerita tradisional tetap relevan dan menarik bagi semua kalangan. Ini adalah standar baru dalam produksi drama Korea.", "Published Date": "01 Sep 2026", "Sentimen": "positive", "Topik": "Produksi", "Tokoh": "-", "Lembaga": "-", "Tempat": "Korea"}, {"No": 32, "Judul Artikel": "Respon Penggemar Internasional Terhadap Perfect Crown", "Link Berita": "bit.ly/pc-resp-32", "Author": "Alex Turner", "Publisher": "TechCrunch", "Content": "Data menunjukkan Perfect Crown sangat diminati oleh penonton di Eropa dan Amerika. Subtitle dan promosi global Disney+ memainkan peran penting dalam hal ini. Drama ini menjadi jembatan bagi penonton luar negeri untuk menyukai karya Korea.", "Published Date": "08 Sep 2026", "Sentimen": "positive", "Topik": "Respon Audiens", "Tokoh": "-", "Lembaga": "Disney+", "Tempat": "Eropa, Amerika, Korea"}, {"No": 33, "Judul Artikel": "Apakah Byeon Wooseok Pantas Menangkan Penghargaan?", "Link Berita": "bit.ly/pc-chem-33", "Author": "Budi Santoso", "Publisher": "Kompas", "Content": "Setelah performanya di Perfect Crown, banyak yang menjagokan Byeon Wooseok meraih penghargaan aktor terbaik. Aktingnya yang karismatik dan mendalam sangat memikat hati juri serta publik. Ia dianggap sebagai salah satu talenta terbaik saat ini.", "Published Date": "15 Sep 2026", "Sentimen": "positive", "Topik": "Chemistry & Akting", "Tokoh": "Byeon Wooseok", "Lembaga": "-", "Tempat": "-"}, {"No": 34, "Judul Artikel": "Menilik Plot Twist yang Mengubah Nasib Karakter Utama", "Link Berita": "bit.ly/pc-plot-34", "Author": "Sarah Lee", "Publisher": "Soompi", "Content": "Plot twist di pertengahan musim benar-benar mengubah arah cerita Perfect Crown secara drastis. Penonton diajak untuk melihat karakter dengan perspektif yang benar-benar baru. Ketidakpastian inilah yang menjadi kunci keberhasilan alur cerita.", "Published Date": "20 Sep 2026", "Sentimen": "positive", "Topik": "Alur & Plot Twist", "Tokoh": "-", "Lembaga": "-", "Tempat": "-"}, {"No": 35, "Judul Artikel": "Produksi Mewah: Meninjau Lokasi Syuting Perfect Crown", "Link Berita": "bit.ly/pc-prod-35", "Author": "Maya Sari", "Publisher": "Liputan6", "Content": "Lokasi syuting yang digunakan dalam Perfect Crown merupakan situs sejarah yang sangat megah. Tim produksi memastikan setiap detail latar benar-benar mencerminkan era yang diceritakan. Hal ini menambah dimensi realitas pada serial yang berbudget besar ini.", "Published Date": "25 Sep 2026", "Sentimen": "positive", "Topik": "Produksi", "Tokoh": "-", "Lembaga": "-", "Tempat": "-"}, {"No": 36, "Judul Artikel": "Perbandingan Respon Penonton: Perfect Crown vs Drama Sukses Lainnya", "Link Berita": "bit.ly/pc-resp-36", "Author": "Andi Wijaya", "Publisher": "Tribun", "Content": "Perfect Crown sering dibandingkan dengan drama legendaris lainnya dalam hal kualitas. Respon audiens menunjukkan kepuasan yang tinggi terhadap konsistensi cerita hingga episode terakhir. Ini adalah salah satu drama yang paling minim kritik di tahun 2026.", "Published Date": "02 Oct 2026", "Sentimen": "positive", "Topik": "Respon Audiens", "Tokoh": "-", "Lembaga": "-", "Tempat": "-"}, {"No": 37, "Judul Artikel": "Chemistry IU dan Byeon Wooseok yang Menjadi Standar Baru", "Link Berita": "bit.ly/pc-chem-37", "Author": "Chloe Kim", "Publisher": "Vogue", "Content": "Industri drakor kini menjadikan chemistry IU dan Byeon Wooseok sebagai benchmark. Banyak drama baru yang mencoba meniru pola hubungan karakter di Perfect Crown. Hal ini menunjukkan seberapa besar pengaruh pasangan ini bagi audiens.", "Published Date": "08 Oct 2026", "Sentimen": "positive", "Topik": "Chemistry & Akting", "Tokoh": "IU, Byeon Wooseok", "Lembaga": "-", "Tempat": "-"}, {"No": 38, "Judul Artikel": "Plot dan Misteri: Mengapa Perfect Crown Tidak Membosankan?", "Link Berita": "bit.ly/pc-plot-38", "Author": "David Lee", "Publisher": "CNN", "Content": "Alur cerita yang selalu memberikan misteri baru membuat penonton tidak bisa berpaling. Penulis Perfect Crown sangat ahli dalam mengelola rasa penasaran audiens. Inilah yang membuat drama ini tetap segar hingga akhir penayangannya.", "Published Date": "15 Oct 2026", "Sentimen": "positive", "Topik": "Alur & Plot Twist", "Tokoh": "-", "Lembaga": "-", "Tempat": "-"}, {"No": 39, "Judul Artikel": "Produksi Sempurna: Keselarasan Musik dan Visual Perfect Crown", "Link Berita": "bit.ly/pc-prod-39", "Author": "James Wong", "Publisher": "Hypebeast", "Content": "Penggunaan musik latar yang pas dengan visual membuat suasana Perfect Crown sangat hidup. Tim produksi memperhatikan setiap aspek audio-visual untuk memberikan pengalaman menonton yang imersif. Investasi besar pada sektor ini tidak sia-sia sama sekali.", "Published Date": "20 Oct 2026", "Sentimen": "positive", "Topik": "Produksi", "Tokoh": "-", "Lembaga": "-", "Tempat": "-"}, {"No": 40, "Judul Artikel": "Evaluasi Akhir: Mengapa Perfect Crown Layak Ditonton Ulang?", "Link Berita": "bit.ly/pc-resp-40", "Author": "Siti Aminah", "Publisher": "Detik", "Content": "Perfect Crown dinilai sebagai salah satu drama yang wajib ditonton ulang untuk menemukan detail tersembunyi. Penggemar setuju bahwa pengalaman menonton kedua akan jauh lebih bermakna. Kesuksesan besar ini menutup tahun 2026 dengan pencapaian gemilang.", "Published Date": "28 Oct 2026", "Sentimen": "positive", "Topik": "Respon Audiens", "Tokoh": "-", "Lembaga": "-", "Tempat": "-"}]};
+
+function animateValue(el, end, duration=1200) {
+  let start = 0;
+  const step = end / (duration / 16);
+  const timer = setInterval(() => {
+    start += step;
+    if (start >= end) { start = end; clearInterval(timer); }
+    el.textContent = Math.round(start);
+  }, 16);
+}
+
+function init() {
+  // Date range
+  document.getElementById('dateRange').textContent = DATA.date_range ? '\uD83D\uDCC5 ' + DATA.date_range : '';
+
+  // KPI
+  animateValue(document.getElementById('kpiTotal'), DATA.total_berita);
+  animateValue(document.getElementById('kpiPositive'), DATA.positive);
+  animateValue(document.getElementById('kpiNegative'), DATA.negative);
+  animateValue(document.getElementById('kpiNeutral'), DATA.neutral);
+  animateValue(document.getElementById('kpiEntities'), DATA.total_entitas);
+
+  // Insight
+  const dominantSentiment = DATA.positive >= DATA.negative && DATA.positive >= DATA.neutral ? 'Positive' :
+                            DATA.negative >= DATA.positive && DATA.negative >= DATA.neutral ? 'Negative' : 'Neutral';
+  const topTopic = Object.entries(DATA.topik_counts).sort((a,b) => b[1]-a[1])[0];
+  const topTokoh = Object.entries(DATA.tokoh_counts).sort((a,b) => b[1]-a[1])[0];
+  document.getElementById('insightText').innerHTML =
+    `Dari <strong>${DATA.total_berita} artikel</strong> yang dianalisis, sentimen dominan adalah <strong>${dominantSentiment}</strong> ` +
+    `(${DATA.pos_pct}%). Topik paling banyak dibahas adalah <strong>${topTopic ? topTopic[0] : '-'}</strong> ` +
+    `dengan ${topTopic ? topTopic[1] : 0} artikel. Tokoh yang paling sering disebutkan adalah <strong>${topTokoh ? topTokoh[0] : '-'}</strong>. ` +
+    `Total ditemukan <strong>${DATA.total_entitas} entitas unik</strong> (tokoh, lembaga, dan tempat).`;
+
+  // Pills
+  document.getElementById('pillPosPct').textContent = DATA.pos_pct + '%';
+  document.getElementById('pillNegPct').textContent = DATA.neg_pct + '%';
+  document.getElementById('pillNeuPct').textContent = DATA.neu_pct + '%';
+  setTimeout(() => {
+    document.getElementById('pillPosBar').style.width = DATA.pos_pct + '%';
+    document.getElementById('pillNegBar').style.width = DATA.neg_pct + '%';
+    document.getElementById('pillNeuBar').style.width = DATA.neu_pct + '%';
+  }, 300);
+
+  // Donut
+  const total = DATA.positive + DATA.negative + DATA.neutral || 1;
+  const posR = DATA.positive / total * 100;
+  const negR = DATA.negative / total * 100;
+  const neuR = DATA.neutral / total * 100;
+  const posDash = posR;
+  const negDash = negR;
+  const neuDash = neuR;
+  const posOffset = 0;
+  const negOffset = -posR;
+  const neuOffset = -(posR + negR);
+
+  document.getElementById('donutChart').innerHTML = `
+    <circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--positive)" stroke-width="4"
+      stroke-dasharray="${posDash} ${100-posDash}" stroke-dashoffset="${posOffset}"
+      style="transition: all 1s ease;"/>
+    <circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--negative)" stroke-width="4"
+      stroke-dasharray="${negDash} ${100-negDash}" stroke-dashoffset="${negOffset}"
+      style="transition: all 1s ease;"/>
+    <circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--neutral)" stroke-width="4"
+      stroke-dasharray="${neuDash} ${100-neuDash}" stroke-dashoffset="${neuOffset}"
+      style="transition: all 1s ease;"/>
+    <text x="21" y="20" text-anchor="middle" fill="var(--gold)" font-size="5" font-weight="700" font-family="Playfair Display">${total}</text>
+    <text x="21" y="25" text-anchor="middle" fill="var(--text-muted)" font-size="2.5" font-family="Inter">articles</text>
+  `;
+  document.getElementById('donutLegend').innerHTML = `
+    <div class="legend-item"><div class="legend-dot" style="background:var(--positive)"></div>Positive (${DATA.positive})</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--negative)"></div>Negative (${DATA.negative})</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--neutral)"></div>Neutral (${DATA.neutral})</div>
+  `;
+
+  // Stacked Bar
+  const stackedEl = document.getElementById('stackedBar');
+  for (const [topik, counts] of Object.entries(DATA.topik_sentimen)) {
+    const t = counts.positive + counts.negative + counts.neutral || 1;
+    stackedEl.innerHTML += `
+      <div class="stacked-row">
+        <div class="stacked-label">${topik}</div>
+        <div class="stacked-track">
+          <div class="stacked-seg pos" style="width:${counts.positive/t*100}%">${counts.positive > 0 ? counts.positive : ''}</div>
+          <div class="stacked-seg neg" style="width:${counts.negative/t*100}%">${counts.negative > 0 ? counts.negative : ''}</div>
+          <div class="stacked-seg neu" style="width:${counts.neutral/t*100}%">${counts.neutral > 0 ? counts.neutral : ''}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Horizontal Bar
+  const hbarEl = document.getElementById('hbarChart');
+  const maxCount = Math.max(...Object.values(DATA.topik_counts), 1);
+  for (const [topik, count] of Object.entries(DATA.topik_counts).sort((a,b) => b[1]-a[1])) {
+    hbarEl.innerHTML += `
+      <div class="hbar-row">
+        <div class="hbar-label">${topik}</div>
+        <div class="hbar-track">
+          <div class="hbar-fill" style="width:${count/maxCount*100}%">${count}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Topics List
+  const topicsEl = document.getElementById('topicsList');
+  const sortedTopics = Object.entries(DATA.topik_counts).sort((a,b) => b[1]-a[1]);
+  sortedTopics.forEach(([topik, count], i) => {
+    const pct = count / sortedTopics[0][1] * 100;
+    topicsEl.innerHTML += `
+      <div class="topic-item">
+        <div class="topic-rank">${i+1}</div>
+        <div class="topic-info">
+          <div class="topic-name">${topik}</div>
+          <div class="topic-progress"><div class="topic-progress-fill" data-width="${pct}"></div></div>
+        </div>
+        <div class="topic-count">${count}</div>
+      </div>
+    `;
+  });
+  setTimeout(() => {
+    document.querySelectorAll('.topic-progress-fill').forEach(el => {
+      el.style.width = el.dataset.width + '%';
+    });
+  }, 500);
+
+  // Publishers
+  const pubEl = document.getElementById('publisherList');
+  for (const [name, count] of Object.entries(DATA.publisher_counts)) {
+    const initials = name.substring(0, 2).toUpperCase();
+    pubEl.innerHTML += `
+      <div class="entity-row">
+        <div class="avatar">${initials}</div>
+        <div class="entity-name">${name}</div>
+        <div class="entity-count">${count}</div>
+      </div>
+    `;
+  }
+
+  // Authors
+  const authEl = document.getElementById('authorList');
+  for (const [name, count] of Object.entries(DATA.author_counts)) {
+    const initials = name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    authEl.innerHTML += `
+      <div class="entity-row">
+        <div class="avatar">${initials}</div>
+        <div class="entity-name">${name}</div>
+        <div class="entity-count">${count}</div>
+      </div>
+    `;
+  }
+
+  // NER Tags
+  function renderTags(containerId, data) {
+    const el = document.getElementById(containerId);
+    const sorted = Object.entries(data).sort((a,b) => b[1]-a[1]);
+    if (sorted.length === 0) {
+      el.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">No data</span>';
+      return;
+    }
+    sorted.forEach(([name, count]) => {
+      el.innerHTML += `<span class="tag">${name}<span class="tag-count">${count}</span></span>`;
+    });
+  }
+  renderTags('tokohCloud', DATA.tokoh_counts);
+  renderTags('lembagaCloud', DATA.lembaga_counts);
+  renderTags('tempatCloud', DATA.tempat_counts);
+
+  // Table
+  const tbody = document.getElementById('tableBody');
+  const footer = document.getElementById('tableFooter');
+  let currentFilter = 'all';
+  let searchQuery = '';
+
+  function renderTable() {
+    let filtered = DATA.articles.filter(a => {
+      const matchFilter = currentFilter === 'all' || a.Sentimen === currentFilter;
+      const q = searchQuery.toLowerCase();
+      const matchSearch = !q ||
+        (a['Judul Artikel'] && a['Judul Artikel'].toLowerCase().includes(q)) ||
+        (a.Author && a.Author.toLowerCase().includes(q)) ||
+        (a.Publisher && a.Publisher.toLowerCase().includes(q)) ||
+        (a.Topik && a.Topik.toLowerCase().includes(q));
+      return matchFilter && matchSearch;
+    });
+    tbody.innerHTML = '';
+    filtered.forEach(a => {
+      const badgeClass = a.Sentimen || 'neutral';
+      tbody.innerHTML += `
+        <tr>
+          <td>${a.No}</td>
+          <td><a href="${a['Link Berita']}" target="_blank" style="color:var(--gold-light);text-decoration:none;">${a['Judul Artikel']}</a></td>
+          <td>${a.Publisher}</td>
+          <td>${a.Author}</td>
+          <td>${a['Published Date']}</td>
+          <td>${a.Topik}</td>
+          <td><span class="sentiment-badge ${badgeClass}">${a.Sentimen}</span></td>
+        </tr>
+      `;
+    });
+    footer.textContent = `Showing ${filtered.length} of ${DATA.articles.length} articles`;
+  }
+
+  document.getElementById('searchInput').addEventListener('input', e => {
+    searchQuery = e.target.value;
+    renderTable();
+  });
+
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      renderTable();
+    });
+  });
+
+  renderTable();
+
+  // Gen date
+  document.getElementById('genDate').textContent = new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
